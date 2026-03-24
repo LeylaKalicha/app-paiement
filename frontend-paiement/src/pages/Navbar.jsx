@@ -9,8 +9,7 @@ export default function Navbar() {
 
       <nav className="flex items-center gap-6">
         <Link to="/"><FiHome /> Accueil</Link>
-        <Link to="/securite"><FiShield /> Sécurité</Link>
-        <Link to="/log"><FiLogIn /> Connexion</Link>
+        <Link to="/login"><FiLogIn /> Connexion</Link>
         <Link to="/register" className="flex items-center gap-1 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">
           <FiUserPlus /> Créer un compte
         </Link>

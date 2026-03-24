@@ -1,9 +1,10 @@
 import express from "express";
-import { getDashboard } from "../controllers/dashboard.controller.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { getDashboard } from "../controllers/dashboard.Controller.js";
+import verifierToken from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
-// 🔐 Route protégée
-router.get("/", verifyToken, getDashboard);
+// GET /api/dashboard  → token obligatoire
+router.get("/", verifierToken, getDashboard);
 
 export default router;

@@ -9,12 +9,12 @@ export default function Home() {
 
       {/* NAVBAR FIXE */}
       <header className="navbar fixed top-0 left-0 w-full bg-white shadow z-50 flex items-center justify-between px-8 py-4">
-        <h1 className="logo text-xl font-bold">PayVirtual</h1>
+        <h3 className="logo text-xl font-bold">PayVirtual</h3>
 
         <nav className="nav-links flex items-center gap-6">
           <Link to="/"><FiHome /> Accueil</Link>
-          <Link to="/Admindashboard"><FiShield /> Sécurité</Link>
-          <Link to="/log"><FiLogIn /> Connexion</Link>
+         
+          <Link to="/Login"><FiLogIn /> Connexion</Link>
           <Link to="/register" className="btn-primary flex items-center gap-1">
             <FiUserPlus /> Créer un compte
           </Link>
@@ -39,7 +39,7 @@ export default function Home() {
               <Link to="/register" className="btn-primary px-6 py-3 rounded-lg text-white bg-purple-500 hover:bg-purple-600 transition">
                 Commencer maintenant
               </Link>
-              <Link to="/log" className="btn-outline px-6 py-3 rounded-lg border border-purple-500 text-purple-500 hover:bg-purple-100 transition">
+              <Link to="/login" className="btn-outline px-6 py-3 rounded-lg border border-purple-500 text-purple-500 hover:bg-purple-100 transition">
                 Se connecter
               </Link>
             </div>
