@@ -2,13 +2,6 @@ import db from "../config/db.js";
 
 // ═══════════════════════════════════════════════════════════════
 //  GET /api/dashboard
-//  Appelé par Dashboard.jsx → useEffect → api.get("/dashboard")
-//
-//  Retourne toutes les données pour la page principale :
-//  user, solde, devise, totalTransactions, paiementsEnAttente,
-//  cartesActives, transactionsRecentes
-//
-//  Tables : utilisateur, compte, transaction, transfert, cartevirtuelle
 // ═══════════════════════════════════════════════════════════════
 export const getDashboard = async (req, res) => {
   try {
@@ -57,6 +50,25 @@ export const getDashboard = async (req, res) => {
       [userId]
     );
 
+    // 7. Revenus totaux — montants positifs validés (crédits reçus)
+    const [[{ revenus }]] = await db.query(
+      `SELECT COALESCE(SUM(montant), 0) AS revenus
+       FROM transaction
+       WHERE utilisateur_id = ? AND statut = 'VALIDEE' AND montant > 0`,
+      [userId]
+    );
+
+    // 8. Dépenses totales — montants négatifs validés (débits envoyés)
+    const [[{ depenses }]] = await db.query(
+      `SELECT COALESCE(SUM(ABS(montant)), 0) AS depenses
+       FROM transaction
+       WHERE utilisateur_id = ? AND statut = 'VALIDEE' AND montant < 0`,
+      [userId]
+    );
+
+    // 9. Épargne = revenus - dépenses (ne peut pas être négatif)
+    const epargne = Math.max(0, Number(revenus) - Number(depenses));
+
     return res.status(200).json({
       user,
       solde:              compte?.solde             || 0,
@@ -65,6 +77,9 @@ export const getDashboard = async (req, res) => {
       paiementsEnAttente: paiementsEnAttente        || 0,
       cartesActives:      cartesActives             || 0,
       transactionsRecentes,
+      revenus:            Number(revenus)           || 0,
+      depenses:           Number(depenses)          || 0,
+      epargne:            epargne                   || 0,
     });
   } catch (err) {
     console.error("getDashboard :", err);

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import GestionUtilisateurs from "./GestionUtilisateurs";
 import GestionNotifications from "./GestionNotifications";
-import GestionFraude from "./GestionFraude";
 import MethodesPaiement from "./MethodesPaiement";
 import GestionTransactions from "./GestionTransactions";
 import GestionSecurite from "./GestionSecurite";
@@ -20,7 +19,6 @@ const Icons = {
   payment:       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
   cards:         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
   notifications: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-  fraud:         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   security:      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
   profile:       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   logout:        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
@@ -31,6 +29,7 @@ const Icons = {
   close:         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
 };
 
+// ── GestionFraude supprimé du menu ──────────────────────────────
 const menuItems = [
   { id: "dashboard",     label: "Tableau de bord",         icon: Icons.dashboard },
   { id: "funds",         label: "Gestion des fonds",        icon: Icons.funds },
@@ -39,14 +38,12 @@ const menuItems = [
   { id: "payment",       label: "Méthodes de paiement",     icon: Icons.payment },
   { id: "cards",         label: "Ajouter des cartes",       icon: Icons.cards },
   { id: "notifications", label: "Notifications",            icon: Icons.notifications },
-  { id: "fraud",         label: "Gestion des fraudes",      icon: Icons.fraud },
   { id: "security",      label: "Sécurité",                 icon: Icons.security },
   { id: "profile",       label: "Profil",                   icon: Icons.profile },
 ];
 
 // ─── PALETTE ────────────────────────────────────────────────────
 const C = {
-  // Sidebar violet moyen — ni trop sombre ni trop clair
   sidebar:       "#2e1065",
   sidebarBorder: "#3b0764",
   sidebarHover:  "rgba(167,139,250,0.15)",
@@ -54,7 +51,6 @@ const C = {
   activeBg:      "rgba(167,139,250,0.18)",
   textPrimary:   "#f5f3ff",
   textMuted:     "#c4b5fd",
-  // Contenu
   accent:        "#7c3aed",
   danger:        "#ef4444",
   bg:            "#f8fafc",
@@ -64,13 +60,8 @@ const C = {
   textGray:      "#64748b",
 };
 
-// ─── DONNÉES ────────────────────────────────────────────────────
-const visitesMensuelles   = [{ mois:"Jan",visites:30},{mois:"Fév",visites:55},{mois:"Mar",visites:40},{mois:"Avr",visites:70},{mois:"Mai",visites:45},{mois:"Jun",visites:60}];
-const utilisateursInscrits= [{ mois:"Mar",nb:0},{mois:"Avr",nb:0},{mois:"Mai",nb:0},{mois:"Jun",nb:0},{mois:"Sep",nb:0},{mois:"Nov",nb:1}];
-const tachesTerminees     = [{ mois:"Jan",nb:1},{mois:"Mar",nb:0},{mois:"Mai",nb:0},{mois:"Jul",nb:0},{mois:"Sep",nb:0},{mois:"Nov",nb:0}];
-
 // ─── STAT CARD ──────────────────────────────────────────────────
-const StatCard = ({ label, valeur, sous, icon, onClick }) => (
+const StatCard = ({ label, valeur, sous, icon, onClick, loading }) => (
   <div onClick={onClick} style={{
     background:C.white,borderRadius:10,padding:"16px 20px",flex:1,minWidth:140,
     boxShadow:"0 1px 3px rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,
@@ -82,27 +73,16 @@ const StatCard = ({ label, valeur, sous, icon, onClick }) => (
   >
     <div>
       <div style={{fontSize:11,color:C.textGray,fontWeight:600,marginBottom:6,letterSpacing:0.4,textTransform:"uppercase"}}>{label}</div>
-      <div style={{fontSize:22,fontWeight:800,color:C.textDark,lineHeight:1}}>{valeur}</div>
-      {sous&&<div style={{fontSize:11,color:C.textGray,marginTop:5}}>{sous}</div>}
+      <div style={{fontSize:22,fontWeight:800,color:loading?"#cbd5e1":C.textDark,lineHeight:1,minWidth:40,minHeight:24,borderRadius:loading?4:0,background:loading?"#f1f5f9":"transparent",transition:"all 0.2s"}}>
+        {loading ? "" : valeur}
+      </div>
+      {sous&&<div style={{fontSize:11,color:C.textGray,marginTop:5}}>{loading?"…":sous}</div>}
     </div>
     <div style={{width:38,height:38,borderRadius:8,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",color:C.accent,flexShrink:0}}>
       {icon}
     </div>
   </div>
 );
-
-// ─── PAGE EN CONSTRUCTION ───────────────────────────────────────
-function PageEnConstruction({titre}){
-  return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:300,color:C.textGray}}>
-      <div style={{width:56,height:56,borderRadius:14,background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.textGray} strokeWidth="1.5"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-      </div>
-      <div style={{fontSize:15,fontWeight:700,color:C.textDark,marginBottom:6}}>{titre}</div>
-      <div style={{fontSize:13,color:C.textGray}}>Cette section est en cours de développement</div>
-    </div>
-  );
-}
 
 // ─── BANNER BIENVENUE ───────────────────────────────────────────
 function BannerBienvenue({admin,onClose}){
@@ -126,8 +106,42 @@ function BannerBienvenue({admin,onClose}){
 }
 
 // ─── DASHBOARD CONTENU ──────────────────────────────────────────
+// Toutes les données viennent de l'API : /api/admin/stats et /api/admin/transactions
 function DashboardContenu({allerVers,admin}){
   const[showBanner,setShowBanner]=useState(true);
+  const[stats,setStats]=useState(null);
+  const[graphData,setGraphData]=useState([]);
+  const[loadingStats,setLoadingStats]=useState(true);
+
+  useEffect(()=>{
+    const token=localStorage.getItem("token");
+    const headers={Authorization:`Bearer ${token}`};
+
+    // Charger stats réelles
+    api.get("/admin/stats",{headers})
+      .then(r=>setStats(r.data))
+      .catch(err=>console.error("Erreur stats:",err))
+      .finally(()=>setLoadingStats(false));
+
+    // Charger données graphique (transactions 7 derniers jours)
+    api.get("/admin/transactions?limite=200",{headers})
+      .then(r=>{
+        // parJour : [{date, completee, echouee}]
+        const parJour = r.data.parJour || [];
+        // Formater pour Recharts : label = date courte
+        const formatted = parJour.map(d=>({
+          jour: d.date ? new Date(d.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"}) : "?",
+          Validées: Number(d.completee)||0,
+          Annulées: Number(d.echouee)||0,
+        }));
+        setGraphData(formatted);
+      })
+      .catch(err=>console.error("Erreur graphique:",err));
+  },[]);
+
+  // Formater montant FCFA
+  const fcfa = (v) => v==null?"XAF 0":`XAF ${Number(v).toLocaleString("fr-FR")}`;
+
   return(
     <div>
       {showBanner&&<BannerBienvenue admin={admin} onClose={()=>setShowBanner(false)}/>}
@@ -136,13 +150,48 @@ function DashboardContenu({allerVers,admin}){
         <p style={{color:C.textGray,fontSize:13,marginTop:3}}>Suivez les métriques clés de la plateforme</p>
       </div>
 
-      {/* Stats — "Numéro de siège" retiré → "Total transactions" */}
+      {/* ── STAT CARDS connectées à /api/admin/stats ── */}
       <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:20}}>
-        <StatCard label="Total transactions" valeur="0"     sous="0% qu'hier"          icon={Icons.transactions} onClick={()=>allerVers("transactions")}/>
-        <StatCard label="Total clients"      valeur="21"    sous="0% qu'hier"           icon={Icons.users}        onClick={()=>allerVers("users")}/>
-        <StatCard label="Montant en appli"   valeur="XAF 0" sous="Solde du compte"      icon={Icons.funds}        onClick={()=>allerVers("transactions")}/>
-        <StatCard label="Cartes actives"     valeur="0"     sous="Cartes utilisateurs"  icon={Icons.cards}        onClick={()=>allerVers("cards")}/>
-        <StatCard label="Comptes suspendus"  valeur="0"     sous="0% qu'hier"           icon={Icons.security}     onClick={()=>allerVers("users")}/>
+        <StatCard
+          label="Total transactions"
+          valeur={stats?.totalTransactions ?? 0}
+          sous={`Aujourd'hui : ${stats?.transactionsAujourdhui ?? 0}`}
+          icon={Icons.transactions}
+          onClick={()=>allerVers("transactions")}
+          loading={loadingStats}
+        />
+        <StatCard
+          label="Total clients"
+          valeur={stats?.totalClients ?? 0}
+          sous={`Suspendus : ${stats?.comptesSuspendus ?? 0}`}
+          icon={Icons.users}
+          onClick={()=>allerVers("users")}
+          loading={loadingStats}
+        />
+        <StatCard
+          label="Montant en appli"
+          valeur={fcfa(stats?.soldeTotal)}
+          sous="Solde cumulé tous comptes"
+          icon={Icons.funds}
+          onClick={()=>allerVers("funds")}
+          loading={loadingStats}
+        />
+        <StatCard
+          label="Cartes actives"
+          valeur={stats?.totalCartes ?? 0}
+          sous="Cartes utilisateurs actives"
+          icon={Icons.cards}
+          onClick={()=>allerVers("cards")}
+          loading={loadingStats}
+        />
+        <StatCard
+          label="Comptes suspendus"
+          valeur={stats?.comptesSuspendus ?? 0}
+          sous="Comptes bloqués"
+          icon={Icons.security}
+          onClick={()=>allerVers("users")}
+          loading={loadingStats}
+        />
       </div>
 
       {/* Raccourcis */}
@@ -151,7 +200,7 @@ function DashboardContenu({allerVers,admin}){
           {label:"Utilisateurs", page:"users",        icon:Icons.users},
           {label:"Notifications",page:"notifications",icon:Icons.notifications},
           {label:"Transactions", page:"transactions", icon:Icons.transactions},
-          {label:"Fraudes",      page:"fraud",        icon:Icons.fraud},
+          {label:"Sécurité",     page:"security",     icon:Icons.security},
         ].map(btn=>(
           <button key={btn.page} onClick={()=>allerVers(btn.page)} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:7,border:`1px solid ${C.border}`,background:C.white,color:C.textGray,fontWeight:600,fontSize:12,cursor:"pointer",transition:"all 0.15s"}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;e.currentTarget.style.background="#f5f3ff";}}
@@ -162,36 +211,47 @@ function DashboardContenu({allerVers,admin}){
         ))}
       </div>
 
-      {/* Graphiques */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
-        {[
-          {titre:"Visites du site",      data:visitesMensuelles,   type:"bar", color:C.accent,  dataKey:"visites"},
-          {titre:"Utilisateurs inscrits",data:utilisateursInscrits,type:"line",color:"#8b5cf6", dataKey:"nb",sous:"+0% aujourd'hui"},
-          {titre:"Tâches terminées",     data:tachesTerminees,     type:"line",color:"#0ea5e9", dataKey:"nb",sous:"+0% mois dernier"},
-        ].map(g=>(
-          <div key={g.titre} style={{background:C.white,borderRadius:10,padding:"16px 18px",border:`1px solid ${C.border}`,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
-            <div style={{fontWeight:700,fontSize:13,color:C.textDark,marginBottom:2}}>{g.titre}</div>
-            {g.sous&&<div style={{fontSize:11,color:C.textGray,marginBottom:12}}>{g.sous}</div>}
-            <ResponsiveContainer width="100%" height={140}>
-              {g.type==="bar"
-                ?<BarChart data={g.data} style={{marginTop:8}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
-                    <XAxis dataKey="mois" tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false}/>
-                    <YAxis tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false}/>
-                    <Tooltip contentStyle={{borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
-                    <Bar dataKey={g.dataKey} fill={g.color} radius={[4,4,0,0]}/>
-                  </BarChart>
-                :<LineChart data={g.data} style={{marginTop:8}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
-                    <XAxis dataKey="mois" tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false}/>
-                    <YAxis tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false}/>
-                    <Tooltip contentStyle={{borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
-                    <Line type="monotone" dataKey={g.dataKey} stroke={g.color} strokeWidth={2} dot={{r:3,fill:g.color}}/>
-                  </LineChart>
-              }
+      {/* ── GRAPHIQUES connectés aux vraies données ── */}
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:14}}>
+
+        {/* Graphique transactions par jour (7 derniers jours) */}
+        <div style={{background:C.white,borderRadius:10,padding:"16px 18px",border:`1px solid ${C.border}`,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.textDark,marginBottom:2}}>Transactions — 7 derniers jours</div>
+          <div style={{fontSize:11,color:C.textGray,marginBottom:12}}>Validées vs Annulées</div>
+          {graphData.length === 0 ? (
+            <div style={{height:140,display:"flex",alignItems:"center",justifyContent:"center",color:C.textGray,fontSize:12}}>
+              Aucune transaction sur cette période
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={graphData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
+                <XAxis dataKey="jour" tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fontSize:10,fill:C.textGray}} axisLine={false} tickLine={false} allowDecimals={false}/>
+                <Tooltip contentStyle={{borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+                <Bar dataKey="Validées" fill={C.accent} radius={[4,4,0,0]}/>
+                <Bar dataKey="Annulées" fill={C.danger} radius={[4,4,0,0]}/>
+              </BarChart>
             </ResponsiveContainer>
-          </div>
-        ))}
+          )}
+        </div>
+
+        {/* Résumé rapide */}
+        <div style={{background:C.white,borderRadius:10,padding:"16px 18px",border:`1px solid ${C.border}`,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.textDark,marginBottom:16}}>Résumé plateforme</div>
+          {[
+            {label:"Transactions aujourd'hui", val:loadingStats?"…":stats?.transactionsAujourdhui??0, color:C.accent},
+            {label:"Total transactions",       val:loadingStats?"…":stats?.totalTransactions??0,    color:C.accent},
+            {label:"Clients actifs",           val:loadingStats?"…":stats?.totalClients??0,         color:"#10b981"},
+            {label:"Comptes suspendus",        val:loadingStats?"…":stats?.comptesSuspendus??0,     color:C.danger},
+            {label:"Cartes actives",           val:loadingStats?"…":stats?.totalCartes??0,          color:"#f59e0b"},
+          ].map(row=>(
+            <div key={row.label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid #f8fafc`}}>
+              <span style={{fontSize:12,color:C.textGray}}>{row.label}</span>
+              <span style={{fontSize:13,fontWeight:700,color:row.color}}>{row.val}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -230,14 +290,13 @@ export default function TableauDeBord(){
       case"dashboard":    return<DashboardContenu allerVers={allerVers} admin={admin}/>;
       case"users":        return<GestionUtilisateurs allerVers={allerVers}/>;
       case"notifications":return<GestionNotifications allerVers={allerVers}/>;
-      case"fraud":        return<GestionFraude allerVers={allerVers}/>;
       case"payment":      return<MethodesPaiement allerVers={allerVers}/>;
       case"transactions": return<GestionTransactions allerVers={allerVers}/>;
       case"security":     return<GestionSecurite allerVers={allerVers}/>;
       case"cards":        return<GestionCartes allerVers={allerVers}/>;
       case"profile":      return<Profil allerVers={allerVers}/>;
       case"funds":        return<GestionFonds allerVers={allerVers}/>;
-      default:            return<PageEnConstruction titre={menuItems.find(m=>m.id===pageActive)?.label||""}/>;
+      default:            return null;
     }
   };
 
@@ -253,7 +312,7 @@ export default function TableauDeBord(){
   return(
     <div style={{display:"flex",height:"100vh",fontFamily:"'Segoe UI',system-ui,sans-serif",background:C.bg}}>
 
-      {/* ── SIDEBAR violet moyen #2e1065 ── */}
+      {/* ── SIDEBAR ── */}
       <div style={{
         width:menuOuvert?232:60,minHeight:"100vh",
         background:C.sidebar,
@@ -262,10 +321,10 @@ export default function TableauDeBord(){
         display:"flex",flexDirection:"column",
         borderRight:`1px solid ${C.sidebarBorder}`,
       }}>
-        {/* Logo */}
+        {/* Logo — "PayVirtual Admin" à la place de "Manager Board" */}
         <div style={{padding:menuOuvert?"18px 16px":"18px 12px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${C.sidebarBorder}`,minHeight:64}}>
           <div style={{width:32,height:32,background:"#a78bfa",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:15,flexShrink:0}}>⚡</div>
-          {menuOuvert&&<span style={{color:C.textPrimary,fontWeight:700,fontSize:14,whiteSpace:"nowrap",letterSpacing:-0.3}}>Manager Board</span>}
+          {menuOuvert&&<span style={{color:C.textPrimary,fontWeight:700,fontSize:14,whiteSpace:"nowrap",letterSpacing:-0.3}}>PayVirtual Admin</span>}
         </div>
 
         {/* Info admin */}
@@ -365,7 +424,7 @@ export default function TableauDeBord(){
                 <div style={{fontSize:12,color:C.textGray,marginTop:2}}>Cette action fermera votre session</div>
               </div>
             </div>
-            <p style={{fontSize:13,color:C.textGray,marginBottom:20,lineHeight:1.6}}>Êtes-vous sûr de vouloir vous déconnecter de Manager Board ?</p>
+            <p style={{fontSize:13,color:C.textGray,marginBottom:20,lineHeight:1.6}}>Êtes-vous sûr de vouloir vous déconnecter de PayVirtual Admin ?</p>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setShowConfirm(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 0",fontSize:13,fontWeight:600,cursor:"pointer",color:C.textGray}}>Annuler</button>
               <button onClick={deconnecter} style={{flex:1,background:C.danger,color:C.white,border:"none",borderRadius:8,padding:"9px 0",fontSize:13,fontWeight:700,cursor:"pointer"}}>Se déconnecter</button>

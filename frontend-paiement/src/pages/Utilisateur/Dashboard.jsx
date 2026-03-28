@@ -8,32 +8,34 @@ import {
 } from "chart.js";
 import {
   FiRepeat, FiCreditCard, FiSend, FiUsers,
-  FiActivity, FiUser, FiLogOut, FiSearch,
-  FiHome, FiGift,
+  FiUser, FiLogOut, FiSearch,
+  FiHome, FiGift, FiBell,
 } from "react-icons/fi";
 
 // ── Imports des pages ──
-import EnvoyerArgent     from "./EnvoyerArgent";
-import MesTransactions   from "./MesTransactions";
-import MesCartes         from "./MesCartes";
-import InviterAmis       from "./InviterAmis";
-import ActiviteCompte    from "./ActiviteCompte";
-import ProfilUtilisateur from "./ProfilUtilisateur";
+import EnvoyerArgent      from "./EnvoyerArgent";
+import MesTransactions    from "./MesTransactions";
+import MesCartes          from "./MesCartes";
+import InviterAmis        from "./InviterAmis";
+import MesNotifications   from "./MesNotifications";
+import ProfilUtilisateur  from "./ProfilUtilisateur";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 export default function Dashboard() {
-  const navigate           = useNavigate();
-  const [dashData, setDashData] = useState(null);
-  const [loading,  setLoading]  = useState(true);
-  const [devise,   setDevise]   = useState("XAF");
-  const [page,     setPage]     = useState("dashboard");
+  const navigate                = useNavigate();
+  const [dashData,  setDashData]  = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [devise,    setDevise]    = useState("XAF");
+  const [page,      setPage]      = useState("dashboard");
+  const [nbNotifs,  setNbNotifs]  = useState(0);
+  const [showConfirm, setShowConfirm] = useState(false); // ← modal déconnexion
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) { navigate("/log"); return; }
+        if (!token) { navigate("/login"); return; }
         const res = await api.get("/dashboard", {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -49,61 +51,49 @@ export default function Dashboard() {
     fetchData();
   }, [navigate]);
 
-  const weeklyChart = {
-    labels: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
-    datasets: [{
-      data: [40, 55, 45, 62, 50, 30, 20],
-      borderColor: "#7c3aed",
-      backgroundColor: "rgba(124,58,237,0.07)",
-      tension: 0.45,
-      fill: true,
-      pointBackgroundColor: "#7c3aed",
-      pointRadius: 4,
-      pointHoverRadius: 6,
-    }]
-  };
+  // Badge notifications
+  useEffect(() => {
+    const chargerNbNotifs = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await api.get("/notifications/mes-notifs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNbNotifs((res.data.data || []).length);
+      } catch { }
+    };
+    chargerNbNotifs();
+  }, []);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: "#94a3b8" } },
-      y: {
-        grid: { color: "#f1f5f9" },
-        ticks: { callback: v => `${v}`, font: { size: 11 }, color: "#94a3b8" },
-        beginAtZero: true,
-      }
-    }
-  };
-
-  const menuPrincipal = [
-    { id: "dashboard",   icon: <FiHome size={14}/>,       label: "Tableau de bord" },
-    { id: "transactions",icon: <FiRepeat size={14}/>,     label: "Transactions" },
-    { id: "envoyer",     icon: <FiSend size={14}/>,       label: "Envoyer de l'argent" },
-    { id: "cartes",      icon: <FiCreditCard size={14}/>, label: "Carte virtuelle" },
-  ];
-  const menuAutres = [
-    { id: "activite",    icon: <FiActivity size={14}/>, label: "Activité du compte" },
-    { id: "inviter",     icon: <FiGift size={14}/>,     label: "Inviter & Gagner" },
-    { id: "profil",      icon: <FiUser size={14}/>,     label: "Mon profil" },
-  ];
-
+  // ── Déconnexion réelle (appelée après confirmation) ──
   const deconnecter = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/log");
+    navigate("/login");
   };
 
-  // ── Rendu des sous-pages ──
+  const menuPrincipal = [
+    { id: "dashboard",    icon: <FiHome size={14}/>,       label: "Tableau de bord" },
+    { id: "transactions", icon: <FiRepeat size={14}/>,     label: "Transactions" },
+    { id: "envoyer",      icon: <FiSend size={14}/>,       label: "Envoyer de l'argent" },
+    { id: "cartes",       icon: <FiCreditCard size={14}/>, label: "Carte virtuelle" },
+  ];
+  const menuAutres = [
+    { id: "notifications", icon: <FiBell size={14}/>,  label: "Notifications", badge: nbNotifs },
+    { id: "inviter",       icon: <FiGift size={14}/>,  label: "Inviter & Gagner" },
+    { id: "profil",        icon: <FiUser size={14}/>,  label: "Mon profil" },
+  ];
+
   const renderPage = () => {
     switch (page) {
-      case "envoyer":      return <EnvoyerArgent     retour={() => setPage("dashboard")} dashData={dashData} />;
-      case "transactions": return <MesTransactions   retour={() => setPage("dashboard")} dashData={dashData} />;
-      case "cartes":       return <MesCartes         retour={() => setPage("dashboard")} dashData={dashData} />;
-      case "inviter":      return <InviterAmis       retour={() => setPage("dashboard")} dashData={dashData} />;
-      case "activite":     return <ActiviteCompte    retour={() => setPage("dashboard")} dashData={dashData} />;
-      case "profil":       return <ProfilUtilisateur retour={() => setPage("dashboard")} dashData={dashData} />;
-      default:             return <ContenuDashboard  dashData={dashData} devise={devise} setDevise={setDevise} allerVers={setPage} />;
+      case "envoyer":       return <EnvoyerArgent      retour={() => setPage("dashboard")} dashData={dashData} />;
+      case "transactions":  return <MesTransactions    retour={() => setPage("dashboard")} dashData={dashData} />;
+      case "cartes":        return <MesCartes          retour={() => setPage("dashboard")} dashData={dashData} />;
+      case "inviter":       return <InviterAmis        retour={() => setPage("dashboard")} dashData={dashData} />;
+      case "notifications": return <MesNotifications   retour={() => setPage("dashboard")} />;
+      case "profil":        return <ProfilUtilisateur  retour={() => setPage("dashboard")} dashData={dashData} />;
+      default:              return <ContenuDashboard   dashData={dashData} devise={devise} setDevise={setDevise} allerVers={setPage} />;
     }
   };
 
@@ -157,20 +147,28 @@ export default function Dashboard() {
                 borderRadius: 7, marginBottom: 1, cursor: "pointer",
                 background: actif ? "#7c3aed" : "transparent",
                 color: actif ? "#fff" : "rgba(255,255,255,0.5)",
-                fontSize: 12, fontWeight: actif ? 600 : 400, transition: "all 0.12s"
+                fontSize: 12, fontWeight: actif ? 600 : 400, transition: "all 0.12s",
+                justifyContent: "space-between"
               }}
                 onMouseEnter={e => { if (!actif) { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#fff"; } }}
                 onMouseLeave={e => { if (!actif) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; } }}
               >
-                {item.icon} {item.label}
+                <span style={{ display: "flex", alignItems: "center", gap: 9 }}>{item.icon} {item.label}</span>
+                {item.badge > 0 && (
+                  <span style={{ background: "#ef4444", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 20, minWidth: 16, textAlign: "center" }}>
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                )}
               </div>
             );
           })}
         </nav>
 
-        {/* Déconnexion */}
+        {/* ── Bouton Déconnexion → ouvre le modal ── */}
         <div style={{ padding: "12px 8px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <button onClick={deconnecter} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 7, width: "100%", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 12, cursor: "pointer", transition: "all 0.12s" }}
+          <button
+            onClick={() => setShowConfirm(true)}
+            style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 7, width: "100%", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 12, cursor: "pointer", transition: "all 0.12s" }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.12)"; e.currentTarget.style.color = "#fca5a5"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
           >
@@ -183,6 +181,40 @@ export default function Dashboard() {
       <main style={{ flex: 1, padding: "28px 30px", overflowY: "auto" }}>
         {renderPage()}
       </main>
+
+      {/* ── MODAL DE CONFIRMATION DÉCONNEXION ── */}
+      {showConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#ffffff", borderRadius: 14, padding: 28, width: 340, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444" }}>
+                <FiLogOut size={18} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Se déconnecter</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Cette action fermera votre session</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20, lineHeight: 1.6 }}>
+              Êtes-vous sûr de vouloir vous déconnecter de PayVirtual ?
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{ flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "9px 0", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#64748b" }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={deconnecter}
+                style={{ flex: 1, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "9px 0", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -191,8 +223,11 @@ export default function Dashboard() {
 //  CONTENU PRINCIPAL DU DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 function ContenuDashboard({ dashData, devise, setDevise, allerVers }) {
-  const solde = Number(dashData?.solde || 0);
-  const nom   = dashData?.user?.nom || "Utilisateur";
+  const solde    = Number(dashData?.solde    || 0);
+  const revenus  = Number(dashData?.revenus  || 0);
+  const depenses = Number(dashData?.depenses || 0);
+  const epargne  = Number(dashData?.epargne  || 0);
+  const nom      = dashData?.user?.nom || "Utilisateur";
 
   const weeklyChart = {
     labels: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -236,10 +271,11 @@ function ContenuDashboard({ dashData, devise, setDevise, allerVers }) {
       {/* Quick Actions */}
       <div style={{ display: "flex", gap: 36, marginBottom: 26 }}>
         {[
-          { icon: <FiSend size={18} color="#64748b"/>,       label: "Envoyer",     id: "envoyer" },
-          { icon: <FiRepeat size={18} color="#64748b"/>,     label: "Transactions",id: "transactions" },
-          { icon: <FiCreditCard size={18} color="#64748b"/>, label: "Mes cartes",  id: "cartes" },
-          { icon: <FiUsers size={18} color="#64748b"/>,      label: "Inviter",     id: "inviter" },
+          { icon: <FiSend size={18} color="#64748b"/>,       label: "Envoyer",       id: "envoyer" },
+          { icon: <FiRepeat size={18} color="#64748b"/>,     label: "Transactions",  id: "transactions" },
+          { icon: <FiCreditCard size={18} color="#64748b"/>, label: "Mes cartes",    id: "cartes" },
+          { icon: <FiBell size={18} color="#64748b"/>,       label: "Notifications", id: "notifications" },
+          { icon: <FiUsers size={18} color="#64748b"/>,      label: "Inviter",       id: "inviter" },
         ].map(a => (
           <div key={a.id} onClick={() => allerVers(a.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, cursor: "pointer" }}>
             <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "all 0.15s" }}
@@ -253,8 +289,6 @@ function ContenuDashboard({ dashData, devise, setDevise, allerVers }) {
 
       {/* Balance + Graphique */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 18, marginBottom: 18 }}>
-
-        {/* Solde */}
         <div style={{ background: "#fff", borderRadius: 14, padding: "22px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
           <p style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginBottom: 12 }}>Solde du compte</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
@@ -268,20 +302,19 @@ function ContenuDashboard({ dashData, devise, setDevise, allerVers }) {
           <div style={{ display: "flex", gap: 20 }}>
             <div>
               <p style={{ fontSize: 10, color: "#94a3b8", marginBottom: 3 }}>Revenus totaux</p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", margin: 0 }}>1 250,00 XAF</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", margin: 0 }}>{revenus.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} XAF</p>
             </div>
             <div>
               <p style={{ fontSize: 10, color: "#94a3b8", marginBottom: 3 }}>Dépenses totales</p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", margin: 0 }}>750,00 XAF</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", margin: 0 }}>{depenses.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} XAF</p>
             </div>
             <div>
               <p style={{ fontSize: 10, color: "#94a3b8", marginBottom: 3 }}>Épargne</p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed", margin: 0 }}>500,00 XAF</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed", margin: 0 }}>{epargne.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} XAF</p>
             </div>
           </div>
         </div>
 
-        {/* Dépenses hebdomadaires */}
         <div style={{ background: "#fff", borderRadius: 14, padding: "22px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Dépenses hebdomadaires</p>
           <p style={{ fontSize: 11, color: "#64748b", marginBottom: 14 }}>Vous avez dépensé <strong style={{ color: "#7c3aed" }}>320 XAF</strong> cette semaine</p>

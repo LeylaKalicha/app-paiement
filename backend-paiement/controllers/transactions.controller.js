@@ -37,8 +37,8 @@ export const topUp = async (req, res) => {
     if (!montant || !telephone) {
       return res.status(400).json({ message: "Montant et téléphone obligatoires." });
     }
-    if (Number(montant) < 100) {
-      return res.status(400).json({ message: "Montant minimum : 100 XAF." });
+    if (Number(montant) < 1) {
+      return res.status(400).json({ message: "Montant minimum : 1 XAF." });
     }
 
     const [[compte]] = await db.query(
