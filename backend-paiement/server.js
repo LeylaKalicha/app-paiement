@@ -8,6 +8,7 @@ import adminRoutes        from "./routes/admin.routes.js";
 import transactionsRoutes from "./routes/transactions.routes.js";
 import cartesRoutes       from "./routes/cartes.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import webhookRoutes from "./routes/webhook.routes.js";
 
 
 
@@ -29,6 +30,7 @@ app.use("/api/admin",        adminRoutes);
 app.use("/api/transactions", transactionsRoutes);
 app.use("/api/cartes",       cartesRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/webhooks", webhookRoutes);
 
 app.get("/", (req, res) => res.json({ message: "✅ API PayVirtual", version: "1.0.0" }));
 
